@@ -20,5 +20,7 @@ namespace SLaks.Ref12.Services {
 
 		///<summary>Indicates whether this symbol is defined in the current solution.</summary>
 		public bool HasLocalSource { get; private set; }
+
+        public string XmlId { get; set; }
 	}
 }

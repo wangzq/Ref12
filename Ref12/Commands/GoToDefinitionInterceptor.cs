@@ -53,13 +53,21 @@ namespace SLaks.Ref12.Commands {
 
 			var target = references.FirstOrDefault(r => r.AvailableAssemblies.Contains(symbol.AssemblyName));
 			if (target == null)
-				return false;
+            {
+                // Open symbol without source in dnspy 2.0
+                // This is a quick & dirty hack so I hardcoded dnspy path; note this will not work with dnspy 1.5 as it
+                // uses different command line syntax to navigate to the symbol.
+                System.Diagnostics.Process.Start(@"c:\tools\dnspy\dnspy.exe", $"{Quoted(symbol.AssemblyPath)} --select {Quoted(symbol.XmlId)}");
+                return true;
+            }
 
 			Debug.WriteLine("Ref12: Navigating to IndexID " + symbol.IndexId);
 
 			target.Navigate(symbol);
 			return true;
 		}
+
+        private static string Quoted(string text) => $"\"{text}\"";
 
 		protected override bool IsEnabled() {
 			return false;	// Always pass through to the native check

@@ -46,11 +46,14 @@ namespace SLaks.Ref12.Services {
 				reference = comp.GetMetadataReference(symbol.ContainingAssembly) as PortableExecutableReference;
 
 			return new MySymbolInfo(
-				IndexIdTranslator.GetId(symbol),
-				isLocal: doc.Project.Solution.Workspace.Kind != WorkspaceKind.MetadataAsSource && doc.Project.Solution.GetProject(symbol.ContainingAssembly) != null,
-				assemblyPath: reference == null ? null : reference.Display,
-				assemblyName: symbol.ContainingAssembly.Identity.Name
-			);
+                IndexIdTranslator.GetId(symbol),
+                isLocal: doc.Project.Solution.Workspace.Kind != WorkspaceKind.MetadataAsSource && doc.Project.Solution.GetProject(symbol.ContainingAssembly) != null,
+                assemblyPath: reference == null ? null : reference.Display,
+                assemblyName: symbol.ContainingAssembly.Identity.Name
+            )
+            {
+                XmlId = symbol.GetDocumentationCommentId()
+            };
 		}
 	}
 
