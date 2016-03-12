@@ -8,6 +8,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using SLaks.Ref12.Services;
+using System.Text.RegularExpressions;
 
 namespace SLaks.Ref12.Commands {
 	class GoToDefinitionInterceptor : CommandTargetBase<VSConstants.VSStd97CmdID> {
@@ -57,7 +58,18 @@ namespace SLaks.Ref12.Commands {
                 // Open symbol without source in dnspy 2.0
                 // This is a quick & dirty hack so I hardcoded dnspy path; note this will not work with dnspy 1.5 as it
                 // uses different command line syntax to navigate to the symbol.
-                System.Diagnostics.Process.Start(@"c:\tools\dnspy\dnspy.exe", $"{Quoted(symbol.AssemblyPath)} --select {Quoted(symbol.XmlId)}");
+                //
+                // For methods in a generic type the returned xml id will contain the actual user type name which is apparently
+                // not working for DnSpy: for example, M:Foo.Bar{MyNamespace.MyType}.GetAll will not work, it should be
+                // M:Foo.Bar`1.GetAll instead.
+                // I have found the Roslyn source code that returns the xml id in this format:
+                // http://source.roslyn.codeplex.com/#Microsoft.CodeAnalysis.CSharp/DocumentationComments/DocumentationCommentIDVisitor.PartVisitor.cs,171
+                // The related imlementation is internal so it doesn't seem to be possible to override this behavior. Therefore I
+                // decided to do string replace after getting the xml id.
+                Debug.WriteLine("Roslyn xml id before replacing: " + symbol.XmlId);
+                var xmlId = Regex.Replace(symbol.XmlId, @"\{.*?\}", m => "`" + (m.Groups[0].Value.Where(ch => ch == ',').Count() + 1));
+                Debug.WriteLine("Roslyn xml id after replacing: " + xmlId);
+                System.Diagnostics.Process.Start(@"c:\tools\dnspy\dnspy.exe", $"{Quoted(symbol.AssemblyPath)} --select {Quoted(xmlId)}");
                 return true;
             }
 
