@@ -43,7 +43,15 @@ namespace SLaks.Ref12.Commands {
 		static ISymbolResolver CreateRoslynResolver() { return new RoslynSymbolResolver(); }
 
 		protected override bool Execute(VSConstants.VSStd97CmdID commandId, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut) {
-			ISymbolResolver resolver = null;
+            // F12 is mapped to Edit.GoToDefinition, but if press F12 to trigger it, this method will only be called once with nCmdexecopt set to 0;
+            // If we use command window to trigger Edit.GoToDefinition, then this method will be called twice: first call with nCmdexecopt set 0x10003,
+            // second call with nCmdexecopt set to 0. See following links for the definition of the nCmdexecopt:
+            // https://msdn.microsoft.com/en-us/library/microsoft.visualstudio.ole.interop.iolecommandtarget.exec(v=vs.110).aspx
+            // https://msdn.microsoft.com/en-us/library/windows/desktop/aa344051(v=vs.85).aspx
+            // I decided to only call this when nCmdexecopt is 0.
+            if (nCmdexecopt != 0) return false;
+
+            ISymbolResolver resolver = null;
 			SnapshotPoint? caretPoint = TextView.GetCaretPoint(s => resolvers.TryGetValue(s.ContentType.TypeName, out resolver));
 			if (caretPoint == null)
 				return false;
